@@ -24,7 +24,7 @@ class ValueIterationAgent(ValueEstimationAgent):
       Your value iteration agent should take an mdp on
       construction, run the indicated number of iterations
       and then act according to the resulting policy.
-    
+
       Some useful mdp methods you will use:
           mdp.getStates()
           mdp.getPossibleActions(state)
@@ -36,13 +36,13 @@ class ValueIterationAgent(ValueEstimationAgent):
     self.iterations = iterations
     self.values = util.Counter() # A Counter is a dict with default 0
     self.tmp_values = util.Counter()
-    states = self.mdp.getStates()
-    
+
     for i in range(self.iterations):
-        for state in states:
-            self.tmp_values[state] = self.getQValue(state, self.getPolicy(state))
-        self.values = self.tmp_values
-    
+        for state in self.mdp.getStates():
+            best_q_value = self.getQValue(state, self.getPolicy(state))
+            self.tmp_values[state] = best_q_value
+        self.values = self.tmp_values.copy()
+
   def getValue(self, state):
     """
       Return the value of the state (computed in __init__).
@@ -58,8 +58,8 @@ class ValueIterationAgent(ValueEstimationAgent):
       to derive it on the fly.
     """
     if self.mdp.isTerminal(state):
-        return 0
-    
+       return 0
+
     possible_states = self.mdp.getTransitionStatesAndProbs(state, action)
     q_value = 0
     for possible_state in possible_states:
@@ -67,7 +67,7 @@ class ValueIterationAgent(ValueEstimationAgent):
         reward = self.mdp.getReward(state, action, next_state)
         value = self.getValue(next_state)
         q_value += prob*(reward + self.discount*value)
-        
+
     return q_value
 
   def getPolicy(self, state):
@@ -78,20 +78,17 @@ class ValueIterationAgent(ValueEstimationAgent):
       there are no legal actions, which is the case at the
       terminal state, you should return None.
     """
-    print state
     possible_actions = self.mdp.getPossibleActions(state)
-    print possible_actions
     best_q_value = -float('inf')
     best_action = None
     for action in possible_actions:
         q_value = self.getQValue(state, action)
-        print q_value
         if q_value > best_q_value:
             best_action = action
-    print best_action
+            best_q_value = q_value
     return best_action
-  
+
   def getAction(self, state):
     "Returns the policy at the state (no exploration)."
     return self.getPolicy(state)
-  
+
