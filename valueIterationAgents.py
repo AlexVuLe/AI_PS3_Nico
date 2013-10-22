@@ -35,15 +35,19 @@ class ValueIterationAgent(ValueEstimationAgent):
     self.discount = discount
     self.iterations = iterations
     self.values = util.Counter() # A Counter is a dict with default 0
-     
-    "*** YOUR CODE HERE ***"
+    self.tmp_values = util.Counter()
+    states = self.mdp.getStates()
+    
+    for i in range(self.iterations):
+        for state in states:
+            self.tmp_values[state] = self.getQValue(state, self.getPolicy(state))
+        self.values = self.tmp_values
     
   def getValue(self, state):
     """
       Return the value of the state (computed in __init__).
     """
     return self.values[state]
-
 
   def getQValue(self, state, action):
     """
@@ -53,8 +57,18 @@ class ValueIterationAgent(ValueEstimationAgent):
       necessarily create this quantity and you may have
       to derive it on the fly.
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if self.mdp.isTerminal(state):
+        return 0
+    
+    possible_states = self.mdp.getTransitionStatesAndProbs(state, action)
+    q_value = 0
+    for possible_state in possible_states:
+        next_state, prob = possible_state
+        reward = self.mdp.getReward(state, action, next_state)
+        value = self.getValue(next_state)
+        q_value += prob*(reward + self.discount*value)
+        
+    return q_value
 
   def getPolicy(self, state):
     """
@@ -64,9 +78,19 @@ class ValueIterationAgent(ValueEstimationAgent):
       there are no legal actions, which is the case at the
       terminal state, you should return None.
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    print state
+    possible_actions = self.mdp.getPossibleActions(state)
+    print possible_actions
+    best_q_value = -float('inf')
+    best_action = None
+    for action in possible_actions:
+        q_value = self.getQValue(state, action)
+        print q_value
+        if q_value > best_q_value:
+            best_action = action
+    print best_action
+    return best_action
+  
   def getAction(self, state):
     "Returns the policy at the state (no exploration)."
     return self.getPolicy(state)
