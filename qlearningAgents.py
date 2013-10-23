@@ -44,21 +44,8 @@ class QLearningAgent(ReinforcementAgent):
       Should return 0.0 if we never seen
       a state or (state,action) tuple
     """
-    if (state,action) not in self.Q:
-        return 0.
-    
-    return self.Q[(state,action)]
+    return self.Q[(state,action)] # Because of counter
   
-  def get_value_for_actions(self, state):      
-      ''' Helper funciton for both getValue and getPolicy '''
-      legal_actions = self.getLegalActions(state)
-      if len(legal_actions) == 0:
-          return [(0., None)]
-      values = []
-      for action in legal_actions:
-          value = self.getQValue(state, action)
-          values.append((value, action))
-      return values
 
   def getValue(self, state):
     """
@@ -67,10 +54,11 @@ class QLearningAgent(ReinforcementAgent):
       there are no legal actions, which is the case at the
       terminal state, you should return a value of 0.0.
     """
-    values_actions = self.get_value_for_actions(state)
-    values = [x[0] for x in values_actions]
-    max_value = max(values)
-    return max_value
+    legal_actions = self.getLegalActions(state)
+    if len(legal_actions) == 0:
+        return 0.
+    max_q = max(self.getQValue(state, action) for action in legal_actions)
+    return max_q
     
   def getPolicy(self, state):
     """
@@ -78,13 +66,14 @@ class QLearningAgent(ReinforcementAgent):
       are no legal actions, which is the case at the terminal state,
       you should return None.
     """
-    values_actions = self.get_value_for_actions(state)
-    values = [x[0] for x in values_actions]
-    max_value = max(values)
-    best_actions = [x[1] for x in values_actions if x[0] == max_value]
-    best_action = random.choice(best_actions)
-    return best_action
-    
+    legal_actions = self.getLegalActions(state)
+    if len(legal_actions) == 0:
+        return None
+    value_action = [(self.getQValue(state, action),action) for action in legal_actions]
+    max_q = self.getValue(state)
+    actions = [x[1] for x in value_action if x[0]==max_q]
+    return random.choice(actions)
+
   def getAction(self, state):
     """
       Compute the action to take in the current state.  With
@@ -116,12 +105,11 @@ class QLearningAgent(ReinforcementAgent):
       it will be called on your behalf
     """
     
-    legal_actions = self.getLegalActions(state)
-    if len(legal_actions) == 0:
-        self.Q[(state,None)] = reward
-    else:
-        current_q = self.Q[(state,action)] 
-        self.Q[(state,action)] = current_q + self.alpha*(reward + self.discount*self.getValue(nextState) - current_q)  
+    legal_actions = self.getLegalActions(nextState)
+    sample = reward
+    if len(legal_actions) != 0:
+        sample = reward + self.discount*self.getValue(nextState)
+    self.Q[(state,action)] = (1-self.alpha)*self.getQValue(state, action) + self.alpha*sample  
     
 class PacmanQAgent(QLearningAgent):
   "Exactly the same as QLearningAgent, but with different default parameters"
